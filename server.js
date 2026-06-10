@@ -66,6 +66,34 @@ const upload = multer({
   }
 });
 
+// Admin Authentication Middleware (Security Hardening)
+const adminAuthMiddleware = (req, res, next) => {
+  // Allow all GET requests for public users
+  if (req.method === 'GET') {
+    return next();
+  }
+  
+  // Allow progress routes for students to submit progress
+  if (req.path.startsWith('/api/progress')) {
+    return next();
+  }
+
+  // Exclude verification endpoint
+  if (req.path === '/api/admin/verify') {
+    return next();
+  }
+
+  const adminKey = req.headers['x-admin-key'];
+  const expectedKey = process.env.ADMIN_KEY || 'admin123';
+
+  if (adminKey !== expectedKey) {
+    return res.status(401).json({ error: 'Unauthorized: Invalid Admin Key' });
+  }
+  next();
+};
+
+app.use(adminAuthMiddleware);
+
 // Mount modular routes
 app.use('/api/units', unitRoutes);
 app.use('/api/lessons', lessonRoutes);
@@ -128,16 +156,22 @@ app.get('/api/documents', (req, res) => {
 app.delete('/api/documents', (req, res) => {
   try {
     const { url } = req.body;
+    if (!url) {
+      return res.status(400).json({ error: 'URL không hợp lệ' });
+    }
+
     const docsPath = path.join(uploadsDir, 'documents.json');
     let docs = [];
     if (fs.existsSync(docsPath)) {
       docs = JSON.parse(fs.readFileSync(docsPath, 'utf8'));
     }
     
-    // Delete physical file
-    const filename = url.replace('/uploads/', '');
-    const filepath = path.join(uploadsDir, filename);
-    if (fs.existsSync(filepath) && !filename.includes('..')) {
+    // Safely extract the filename from the URL to prevent directory traversal
+    const filename = path.basename(url);
+    const filepath = path.resolve(uploadsDir, filename);
+
+    // Hardened path validation: ensure it remains within the uploads folder
+    if (filepath.startsWith(uploadsDir) && fs.existsSync(filepath)) {
       fs.unlinkSync(filepath);
     }
     
@@ -146,6 +180,18 @@ app.delete('/api/documents', (req, res) => {
     res.json({ message: 'Đã xóa tài liệu!', documents: docs });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin Verification Endpoint (Security Hardening)
+app.post('/api/admin/verify', (req, res) => {
+  const { password } = req.body;
+  const expectedKey = process.env.ADMIN_KEY || 'admin123';
+
+  if (password === expectedKey) {
+    res.json({ success: true });
+  } else {
+    res.status(401).json({ success: false, error: 'Mật khẩu Admin không chính xác!' });
   }
 });
 

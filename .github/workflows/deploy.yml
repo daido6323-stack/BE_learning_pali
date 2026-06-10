@@ -39,6 +39,7 @@ jobs:
               echo "PORT=8081" > .env
               echo "DATABASE_URL=postgresql://postgres:palipath2024@postgres:5432/learning_pali?schema=public" >> .env
               echo "PUBLIC_URL=https://api.uydev.io.vn" >> .env
+              echo "ADMIN_KEY=admin123" >> .env
             fi
 
             # Rebuild and restart containers
