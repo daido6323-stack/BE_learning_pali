@@ -1,10 +1,10 @@
 const prisma = require('../config/prisma');
 
-exports.getProgressByUserId = async (req, res) => {
+exports.getProgressForCurrentUser = async (req, res) => {
   try {
-    const { userId } = req.params;
+    const userId = req.user.id;
     const progress = await prisma.userProgress.findMany({
-      where: { userId: parseInt(userId) }
+      where: { userId }
     });
     res.json(progress);
   } catch (err) {
@@ -14,11 +14,12 @@ exports.getProgressByUserId = async (req, res) => {
 
 exports.upsertProgress = async (req, res) => {
   try {
-    const { userId, lessonId, isCompleted } = req.body;
+    const userId = req.user.id;
+    const { lessonId, isCompleted } = req.body;
     const progress = await prisma.userProgress.upsert({
       where: {
         userId_lessonId: {
-          userId: parseInt(userId),
+          userId,
           lessonId: parseInt(lessonId)
         }
       },
@@ -27,7 +28,7 @@ exports.upsertProgress = async (req, res) => {
         lastAccessed: new Date()
       },
       create: {
-        userId: parseInt(userId),
+        userId,
         lessonId: parseInt(lessonId),
         isCompleted: isCompleted || false
       }

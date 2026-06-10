@@ -10,6 +10,7 @@ const lessonRoutes = require('./src/routes/lessonRoutes');
 const questionRoutes = require('./src/routes/questionRoutes');
 const dictionaryRoutes = require('./src/routes/dictionaryRoutes');
 const progressRoutes = require('./src/routes/progressRoutes');
+const authRoutes = require('./src/routes/authRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -65,6 +66,9 @@ const upload = multer({
     }
   }
 });
+
+// Mount Auth routes first
+app.use('/api/auth', authRoutes);
 
 // Admin Authentication Middleware (Security Hardening)
 const adminAuthMiddleware = (req, res, next) => {

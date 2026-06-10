@@ -43,12 +43,26 @@ model Question {
   @@map("questions")
 }
 
+model User {
+  id           Int            @id @default(autoincrement())
+  username     String         @unique
+  password     String
+  profileName  String
+  xp           Int            @default(0)
+  streak       Int            @default(1)
+  createdAt    DateTime       @default(now())
+  userProgress UserProgress[]
+
+  @@map("users")
+}
+
 model UserProgress {
   userId       Int
   lessonId     Int
   isCompleted  Boolean  @default(false)
   lastAccessed DateTime @default(now()) @updatedAt
   lesson       Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, lessonId])
   @@map("user_progress")
