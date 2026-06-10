@@ -79,13 +79,18 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
     if (!req.file) {
       return res.status(400).json({ error: 'Không tìm thấy file nào được tải lên.' });
     }
-    const fileUrl = `/uploads/${req.file.filename}`;
+
+    // Build absolute URL — uses PUBLIC_URL env or falls back to request origin
+    const baseUrl = process.env.PUBLIC_URL ||
+      `${req.protocol}://${req.get('host')}`;
+    const fileUrl = `${baseUrl}/uploads/${req.file.filename}`;
+
     const docInfo = {
       name: req.file.originalname,
       url: fileUrl,
       uploadedAt: new Date().toISOString()
     };
-    
+
     const docsPath = path.join(uploadsDir, 'documents.json');
     let docs = [];
     if (fs.existsSync(docsPath)) {
